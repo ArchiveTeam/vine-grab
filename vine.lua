@@ -115,6 +115,9 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
   local function check(urla)
     local origurl = url
     local url = string.match(urla, "^([^#]+)")
+    if string.match(url, "^https?://[^/]*cdn%.vine%.co/r/") then
+      url = string.gsub(url, "https?://", "https://")
+    end
     if (downloaded[url] ~= true and addedtolist[url] ~= true)
        and allowed(url) then
       table.insert(urls, { url=string.gsub(url, "&amp;", "&") })
