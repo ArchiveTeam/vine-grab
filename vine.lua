@@ -10,6 +10,7 @@ local warc_file_base = os.getenv('warc_file_base')
 local items = {}
 local discousers = {}
 local discovideos = {}
+local discotags = {}
 
 local url_count = 0
 local tries = 0
@@ -60,6 +61,8 @@ allowed = function(url)
     discovideos[string.match(url, "^https?://[^/]*vine%.co/v/([0-9A-Za-z]+)")] = true
   elseif string.match(url, "^https?://[^/]*vine%.co/u/[0-9]+") then
     discousers[string.match(url, "^https?://[^/]*vine%.co/u/([0-9]+)")] = true
+  elseif string.match(url, "^https?://[^/]*vine%.co/tags/.+") then
+    discotags[string.match(url, "^https?://[^/]*vine%.co/tags/(.+)")] = true
   end
 
   if string.match(url, "'+")
@@ -131,7 +134,7 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
       check(string.gsub(newurl, ":////", "://"))
     elseif string.match(newurl, "^https?://") then
       check(newurl)
-    elseif string.match(newurl, "^https?:\\/\\/") then
+    elseif string.match(newurl, "^https?:\\/\\?/") then
       check(string.gsub(newurl, "\\", ""))
     elseif string.match(newurl, "^\\/\\/") then
       check(string.match(url, "^(https?:)")..string.gsub(newurl, "\\", ""))
@@ -161,8 +164,37 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
   if allowed(url) and not string.match(url, "^https?://[^/]*cdn%.vine%.co/r/") then
     html = read_file(file)
 
-    for newuser in string.gmatch(html, '"userId[^"]*"%s*:%s*"?([0-9]+)"?') do
+    for newuser in string.gmatch(html, '"user[iI]d[^"]*"%s*:%s*"?([0-9]+)"?') do
       discousers[newuser] = true
+    end
+
+    for newtag in string.gmatch(html, 'tags?\\?/([^"]+)"') do
+      discotags[newtag] = true
+    end
+
+    for newtag in string.gmatch(html, '{[^}]*"title"%s*:%s*"([^"]+)"[^}]+"type"%s*:%s*"tag"[^}]*}') do
+      discotags[newtag] = true
+    end
+
+    if string.match(url, "^https?://[^/]*vine%.co/v/[0-9a-zA-Z]+$")
+       and string.match(html, 'content="vine://post/[0-9]+"') then
+      local postid = string.match(html, 'content="vine://post/([0-9]+)"')
+      items[postid] = true
+      check("https://vine.co/api/posts/" .. postid .. "/comments?page=1&size=3")
+    end
+
+    if (item_type == "video" or item_type == "videos")
+       and string.match(url, "^https://vine.co/api/posts/[0-9]+/comments%?page=[0-9]+&size=[0-9]+") then
+      local json_ = load_json_file(html)
+      if json_["success"] ~= true then
+        io.stdout:write("Getting information from API was unsuccesful. ABORTING...\n")
+        abortgrab = true
+      elseif json_["data"]["nextPage"] ~= nil then
+        local page = tostring(json_["data"]["nextPage"])
+        local size = tostring(json_["data"]["size"])
+        local postid = string.match(url, "^https://vine.co/api/posts/([0-9]+)/comments%?page=[0-9]+&size=[0-9]+")
+        check("https://vine.co/api/posts/" .. postid .. "/comments?page=" .. page .. "&size=" .. size)
+      end
     end
 
     if item_type == "user"
@@ -279,6 +311,9 @@ wget.callbacks.finish = function(start_time, end_time, wall_time, numurls, total
   end
   for video, _ in pairs(discovideos) do
     file:write("video:" .. video .. "\n")
+  end
+  for tag, _ in pairs(discotags) do
+    file:write("tag:" .. tag .. "\n")
   end
   file:close()
 end
