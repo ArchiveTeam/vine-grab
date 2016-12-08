@@ -181,6 +181,9 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
       local postid = string.match(html, 'content="vine://post/([0-9]+)"')
       items[postid] = true
       check("https://vine.co/api/posts/" .. postid .. "/comments?page=1&size=3")
+      check("https://vine.co/api/posts/" .. postid .. "/comments?page=1&size=100")
+      check("https://vine.co/api/posts/" .. postid .. "/comments?page=0&size=3")
+      check("https://vine.co/api/posts/" .. postid .. "/comments?page=0&size=100")
     end
 
     if (item_type == "video" or item_type == "videos")
