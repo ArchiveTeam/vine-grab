@@ -58,7 +58,7 @@ if not WGET_LUA:
 #
 # Update this each time you make a non-cosmetic change.
 # It will be added to the WARC files and reported to the tracker.
-VERSION = "20161208.02"
+VERSION = "20161209.01"
 USER_AGENT = 'ArchiveTeam'
 TRACKER_ID = 'vine'
 TRACKER_HOST = 'tracker.archiveteam.org'
@@ -203,6 +203,22 @@ class WgetArgs(object):
 
         def add_video(video_id):
             wget_args.extend(['--warc-header', 'vine-video: {video_id}'.format(**locals())])
+            wget_args.append('https://vine.co/api/timelines/posts/s/{video_id}'.format(**locals()))
+            wget_args.append('https://vine.co/v/{video_id}/embed/simple?audio=1'.format(**locals()))
+            wget_args.append('https://vine.co/v/{video_id}/embed/simple?audio=0'.format(**locals()))
+            wget_args.append('https://vine.co/v/{video_id}/embed/simple'.format(**locals()))
+            wget_args.append('https://vine.co/v/{video_id}/embed/wide?audio=1'.format(**locals()))
+            wget_args.append('https://vine.co/v/{video_id}/embed/wide?audio=0'.format(**locals()))
+            wget_args.append('https://vine.co/v/{video_id}/embed/wide'.format(**locals()))
+            wget_args.append('https://vine.co/v/{video_id}/embed/postcard?audio=1'.format(**locals()))
+            wget_args.append('https://vine.co/v/{video_id}/embed/postcard?audio=0'.format(**locals()))
+            wget_args.append('https://vine.co/v/{video_id}/embed/postcard'.format(**locals()))
+            wget_args.append('https://vine.co/v/{video_id}/fb-card?audio=1'.format(**locals()))
+            wget_args.append('https://vine.co/v/{video_id}/fb-card?audio=0'.format(**locals()))
+            wget_args.append('https://vine.co/v/{video_id}/fb-card'.format(**locals()))
+            wget_args.append('https://vine.co/v/{video_id}/card?audio=1'.format(**locals()))
+            wget_args.append('https://vine.co/v/{video_id}/card?audio=0'.format(**locals()))
+            wget_args.append('https://vine.co/v/{video_id}/card'.format(**locals()))
             wget_args.append('https://vine.co/v/{video_id}'.format(**locals()))
             wget_args.append('https://vine.co/v/{video_id}/embed'.format(**locals()))
             wget_args.append('https://vine.co/v/{video_id}/card?api=1'.format(**locals()))
