@@ -58,7 +58,7 @@ if not WGET_LUA:
 #
 # Update this each time you make a non-cosmetic change.
 # It will be added to the WARC files and reported to the tracker.
-VERSION = "20161209.02"
+VERSION = "20170110.01"
 USER_AGENT = 'ArchiveTeam'
 TRACKER_ID = 'vine'
 TRACKER_HOST = 'tracker.archiveteam.org'
@@ -184,6 +184,7 @@ class WgetArgs(object):
             "--timeout", "30",
             "--tries", "inf",
             "--domains", "vine.co",
+            "--header", "x-vine-client: vinewww/2.1",
             "--span-hosts",
             "--waitretry", "30",
             "--warc-file", ItemInterpolation("%(item_dir)s/%(warc_file_base)s"),
@@ -199,7 +200,7 @@ class WgetArgs(object):
         item['item_type'] = item_type
         item['item_value'] = item_value
         
-        assert item_type in ('video', 'videos', 'user')
+        assert item_type in ('video', 'videos', 'user', 'tag')
 
         def add_video(video_id):
             wget_args.extend(['--warc-header', 'vine-video: {video_id}'.format(**locals())])
@@ -238,10 +239,18 @@ class WgetArgs(object):
             for video_id in item_value.split(','):
                 add_video(video_id)
         elif item_type == 'user':
+            wget_args.extend(['--warc-header', 'vine-user: {item_value}'.format(**locals())])
             wget_args.append('https://vine.co/u/{item_value}'.format(**locals()))
             wget_args.append('https://vine.co/api/users/profiles/{item_value}'.format(**locals()))
             wget_args.append('https://vine.co/api/timelines/users/{item_value}'.format(**locals()))
             wget_args.append('https://vine.co/api/timelines/users/{item_value}/likes'.format(**locals()))
+        elif item_type == 'tag':
+            wget_args.extend(['--warc-header', 'vine-tag: {item_value}'.format(**locals())])
+            wget_args.append('https://vine.co/tags/{item_value}'.format(**locals()))
+            wget_args.append('https://vine.co/tags/{item_value}?mode=tv'.format(**locals()))
+            wget_args.append('https://vine.co/tags/{item_value}?mode=grid'.format(**locals()))
+            wget_args.append('https://vine.co/tags/{item_value}?mode=list'.format(**locals()))
+            wget_args.append('https://vine.co/api/timelines/tags/{item_value}'.format(**locals()))
         else:
             raise Exception('Unknown item')
         

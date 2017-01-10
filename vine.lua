@@ -187,7 +187,7 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
     end
 
     if (item_type == "video" or item_type == "videos")
-       and string.match(url, "^https://vine.co/api/posts/[0-9]+/comments%?page=[0-9]+&size=[0-9]+") then
+       and string.match(url, "^https?://[^/]*vine%.co/api/posts/[0-9]+/comments%?page=[0-9]+&size=[0-9]+") then
       local json_ = load_json_file(html)
       if json_["success"] ~= true then
         io.stdout:write("Getting information from API was unsuccesful. ABORTING...\n")
@@ -195,30 +195,36 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
       elseif json_["data"]["nextPage"] ~= nil then
         local page = tostring(json_["data"]["nextPage"])
         local size = tostring(json_["data"]["size"])
-        local postid = string.match(url, "^https://vine.co/api/posts/([0-9]+)/comments%?page=[0-9]+&size=[0-9]+")
+        local postid = string.match(url, "^https?://[^/]*vine%.co/api/posts/([0-9]+)/comments%?page=[0-9]+&size=[0-9]+")
         check("https://vine.co/api/posts/" .. postid .. "/comments?page=" .. page .. "&size=" .. size)
       end
     end
 
     if item_type == "user"
-       and string.match(url, "^https://vine.co/u/[0-9]+$") then
+       and string.match(url, "^https?://[^/]*vine%.co/u/[0-9]+$") then
       local username = string.match(html, '<meta%s+property="og:url"%s+content="https?://[^/]*vine%.co/([^"]+)">')
-      if string.match(username, "/") then
+
+      if string.match(username, "/")
+         and not string.match(username, "^u/") then
         abortgrab = true
-      else
-        items[username] = true
-        check("https://vine.co/" .. username)
-        check("https://vine.co/" .. username .. "?mode=grid")
-        check("https://vine.co/" .. username .. "?mode=list")
-        check("https://vine.co/" .. username .. "?mode=tv")
-        check("https://vine.co/" .. username .. "/likes")
-        check("https://vine.co/api/users/profiles/vanity/" .. username)
-        table.insert(urls, { url=string.match(html, '<meta%s+property="og:image"%s+content="([^"]+)">') })
       end
+
+      items[username] = true
+      check("https://vine.co/" .. username)
+      check("https://vine.co/" .. username .. "?mode=grid")
+      check("https://vine.co/" .. username .. "?mode=list")
+      check("https://vine.co/" .. username .. "?mode=tv")
+      check("https://vine.co/" .. username .. "/likes")
+      check("https://vine.co/" .. username .. "/likes?mode=grid")
+      check("https://vine.co/" .. username .. "/likes?mode=list")
+      check("https://vine.co/" .. username .. "/likes?mode=tv")
+      check("https://vine.co/api/users/profiles/vanity/" .. username)
+      table.insert(urls, { url=string.match(html, '<meta%s+property="og:image"%s+content="([^"]+)">') })
     end
 
-    if item_type == "user"
-       and string.match(url, "^https://vine.co/api/timelines/users/[0-9]+") then
+    if (item_type == "user" or item_type == "tag")
+       and (string.match(url, "^https?://[^/]*vine%.co/api/timelines/users/[0-9]+")
+        or string.match(url, "https?://[^/]*vine%.co/api/timelines/tags/")) then
       local json_ = load_json_file(html)
       if json_["success"] ~= true then
         io.stdout:write("Getting information from API was unsuccesful. ABORTING...\n")
@@ -269,7 +275,7 @@ wget.callbacks.httploop_result = function(url, err, http_stat)
   end
   
   if status_code >= 500 or
-    (status_code >= 400 and status_code ~= 404) or
+    (status_code >= 400 and status_code ~= 404 and status_code ~= 410) or
     status_code == 0 then
     io.stdout:write("Server returned "..http_stat.statcode.." ("..err.."). Sleeping.\n")
     io.stdout:flush()
@@ -302,6 +308,7 @@ end
 
 wget.callbacks.before_exit = function(exit_status, exit_status_string)
   if abortgrab == true then
+    io.stdout:write("ABORTING...\n")
     return wget.exits.IO_FAIL
   end
   return exit_status
