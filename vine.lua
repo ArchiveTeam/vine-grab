@@ -85,7 +85,14 @@ allowed = function(url)
     end
   end
 
-  for s in string.gmatch(url, "([0-9a-zA-Z%.%-_]+)") do
+  for s in string.gmatch(url, "([0-9a-zA-Z%.%-_%%]+)") do
+    if items[s] == true
+       and string.match(url, "^https?://[^/]*vine%.co") then
+      return true
+    end
+  end
+
+  for s in string.gmatch(url, "([^/%?=&]+)") do
     if items[s] == true
        and string.match(url, "^https?://[^/]*vine%.co") then
       return true
