@@ -85,7 +85,7 @@ allowed = function(url)
     end
   end
 
-  for s in string.gmatch(url, "([0-9a-zA-Z]+)") do
+  for s in string.gmatch(url, "([0-9a-zA-Z%.%-_]+)") do
     if items[s] == true
        and string.match(url, "^https?://[^/]*vine%.co") then
       return true
@@ -186,13 +186,18 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
       check("https://vine.co/api/posts/" .. postid .. "/comments?page=0&size=100")
     end
 
-    if (item_type == "video" or item_type == "videos")
-       and string.match(url, "^https?://[^/]*vine%.co/api/posts/[0-9]+/comments%?page=[0-9]+&size=[0-9]+") then
+    if string.match(url, "^https?://[^/]*vine%.co/api/") and status_code == 200 then
       local json_ = load_json_file(html)
       if json_["success"] ~= true then
         io.stdout:write("Getting information from API was unsuccesful. ABORTING...\n")
         abortgrab = true
-      elseif json_["data"]["nextPage"] ~= nil then
+      end
+    end      
+
+    if (item_type == "video" or item_type == "videos")
+       and string.match(url, "^https?://[^/]*vine%.co/api/posts/[0-9]+/comments%?page=[0-9]+&size=[0-9]+") then
+      local json_ = load_json_file(html)
+      if json_["data"]["nextPage"] ~= nil then
         local page = tostring(json_["data"]["nextPage"])
         local size = tostring(json_["data"]["size"])
         local postid = string.match(url, "^https?://[^/]*vine%.co/api/posts/([0-9]+)/comments%?page=[0-9]+&size=[0-9]+")
@@ -226,10 +231,7 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
        and (string.match(url, "^https?://[^/]*vine%.co/api/timelines/users/[0-9]+")
         or string.match(url, "https?://[^/]*vine%.co/api/timelines/tags/")) then
       local json_ = load_json_file(html)
-      if json_["success"] ~= true then
-        io.stdout:write("Getting information from API was unsuccesful. ABORTING...\n")
-        abortgrab = true
-      elseif json_["data"]["nextPage"] ~= nil then
+      if json_["data"]["nextPage"] ~= nil then
         local page = tostring(json_["data"]["nextPage"])
         local anchor = json_["data"]["anchorStr"]
         local size = tostring(json_["data"]["size"])
