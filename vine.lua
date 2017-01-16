@@ -65,6 +65,10 @@ allowed = function(url)
     discotags[string.match(url, "^https?://[^/]*vine%.co/tags/(.+)")] = true
   end
 
+  if string.match(url, "^https?://[^%.]+%.twimg%.com/") then
+    return true
+  end
+
   if string.match(url, "'+")
      or string.match(url, "[<>\\]")
      or string.match(url, "//$") then
@@ -72,7 +76,7 @@ allowed = function(url)
   end
 
   if item_type == 'video' or item_type == 'videos' then
-    if string.match(url, "^https?://[^/]*cdn%.vine%.co/[rw]/")
+    if string.match(url, "^https?://[^/]*cdn%.vine%.co/")
        and not string.match(url, "^https?://v%.cdn%.vine%.co/r/avatars/") then
       return true
     end
@@ -84,6 +88,7 @@ allowed = function(url)
       return true
     end
   end
+
 
   for s in string.gmatch(url, "([0-9a-zA-Z%.%-_%%]+)") do
     if items[s] == true
@@ -168,8 +173,27 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
     end
   end
   
-  if allowed(url) and not string.match(url, "^https?://[^/]*cdn%.vine%.co/r/") then
+  if allowed(url)
+     and not (string.match(url, "^https?://[^/]*cdn%.vine%.co/r/")
+      or string.match(url, "^https?://[^/]*cdn%.vine%.co/video")
+      or string.match(url, "%.ts$")
+      or string.match(url, "^https?://pbs%.twimg%.com/")) then
     html = read_file(file)
+
+    if string.match(url, "%.m3u8$") then
+      check(url .. "?network_type=wifi")
+      for s in string.gmatch(html, "[^%s]+") do
+        if not string.match(s, "^#") then
+          checknewurl(s)
+        end
+      end
+    end
+
+    for s in string.gmatch(html, '"longformId[^"]*"%s*:%s*"([0-9]+)"') do
+      items[s] = true
+      check("https://vine.co/watch/" .. s)
+      check("https://vine.co/api/longforms/" .. s .. "/endlessLikes")
+    end
 
     for newuser in string.gmatch(html, '"user[iI]d[^"]*"%s*:%s*"?([0-9]+)"?') do
       discousers[newuser] = true

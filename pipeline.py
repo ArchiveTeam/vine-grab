@@ -58,7 +58,7 @@ if not WGET_LUA:
 #
 # Update this each time you make a non-cosmetic change.
 # It will be added to the WARC files and reported to the tracker.
-VERSION = "20170112.02"
+VERSION = "20170116.01"
 USER_AGENT = 'ArchiveTeam'
 TRACKER_ID = 'vine'
 TRACKER_HOST = 'tracker.archiveteam.org'
@@ -232,6 +232,8 @@ class WgetArgs(object):
             wget_args.append('https://vine.co/v/{video_id}/card'.format(**locals()))
             wget_args.append('https://vine.co/v/{video_id}'.format(**locals()))
             wget_args.append('https://vine.co/v/{video_id}/embed'.format(**locals()))
+            wget_args.append('https://vine.co/v/{video_id}?video=0'.format(**locals()))
+            wget_args.append('https://vine.co/v/{video_id}?video=1'.format(**locals()))
 
         if item_type == 'video':
             add_video(item_value)
