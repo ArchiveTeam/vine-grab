@@ -77,7 +77,7 @@ allowed = function(url)
 
   if item_type == 'video' or item_type == 'videos' then
     if string.match(url, "^https?://[^/]*cdn%.vine%.co/")
-       and not string.match(url, "^https?://v%.cdn%.vine%.co/r/avatars/") then
+       and not string.match(url, "^https?://v%.cdn%.vine%.co/[rv]/avatars/") then
       return true
     end
   elseif item_type == 'user' then
